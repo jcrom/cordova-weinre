@@ -35,6 +35,8 @@ WebInspector.ConsoleView = function(drawer)
 
     // added by jcrom
     this.tmp_properties = [];
+    this.tmp_extproperties = [];
+    this,expressionString = '';
 
     this.messages = [];
     this.drawer = drawer;
@@ -382,26 +384,36 @@ WebInspector.ConsoleView.prototype = {
 
         if (dotNotation || bracketNotation)
             expressionString = expressionString.substr(0, lastIndex);
-
+        this.expressionString = expressionString;
         var prefix = wordRange.toString();
         if (!expressionString && !prefix)
             return;
+
 
         var reportCompletions = this._reportCompletions.bind(this, bestMatchOnly, completionsReadyCallback, dotNotation, bracketNotation, prefix);
         // Collect comma separated object properties for the completion.
 
         var includeCommandLineAPI = (!dotNotation && !bracketNotation);
         var injectedScriptAccess;
-        var tmp_wordRange = wordRange.toString();
-
-        if (this.tmp_properties.length === 0 || tmp_wordRange.length < 2 ) {
-          this.tmp_properties =[];
+        var tmp_flag = false;
+        if (!expressionString && this.tmp_properties.length === 0)
+          tmp_flag = true;
+        else if (expressionString && !prefix)
+          tmp_flag = true;
+        else if (!expressionString && prefix.length<2)
+          tmp_flag = true;
+        else if (expressionString && this.tmp_extproperties.length === 0)
+          tmp_flag = true;
+        if (tmp_flag){
           if (WebInspector.panels.scripts && WebInspector.panels.scripts.paused)
               InspectorBackend.getCompletionsOnCallFrame(WebInspector.panels.scripts.selectedCallFrameId(), expressionString, includeCommandLineAPI, reportCompletions);
           else
               InspectorBackend.getCompletions(expressionString, includeCommandLineAPI, reportCompletions);
-        } else {
-              this.reportCompletions_ext(bestMatchOnly, completionsReadyCallback, dotNotation, bracketNotation, prefix, this.tmp_properties);
+        }else {
+          if (expressionString)
+            this.reportCompletions_ext(bestMatchOnly, completionsReadyCallback, dotNotation, bracketNotation, prefix, this.tmp_extproperties);
+          else
+            this.reportCompletions_ext(bestMatchOnly, completionsReadyCallback, dotNotation, bracketNotation, prefix, this.tmp_properties);
         }
     },
 
@@ -447,7 +459,10 @@ WebInspector.ConsoleView.prototype = {
 
         var results = [];
         var properties = Object.keys(result).sort();
-        this.tmp_properties = properties;
+        if (this.expressionString === '' )
+          this.tmp_properties = properties;
+        else
+          this.tmp_extproperties = properties;
 
         for (var i = 0; i < properties.length; ++i) {
             var property = properties[i];
