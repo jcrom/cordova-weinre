@@ -27,7 +27,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-const ExpressionStopCharacters = " =:[({;,!+-*/&|^<>";
+const ExpressionStopCharacters = " =[({;,!+-*/&|^<>";
 
 WebInspector.ConsoleView = function(drawer)
 {
@@ -53,7 +53,7 @@ WebInspector.ConsoleView = function(drawer)
     this.promptElement.setAttribute("contenteditable", "true");
     this.promptElement.className = "source-code";
     this.promptElement.addEventListener("keydown", this._promptKeyDown.bind(this), true);
-    this.prompt = new WebInspector.TextPrompt(this.promptElement, this.completions_extend.bind(this), ExpressionStopCharacters + ".");
+    this.prompt = new WebInspector.TextPrompt(this.promptElement, this.completions_extend.bind(this), ExpressionStopCharacters + ".:");
     this.prompt.history = WebInspector.settings.consoleHistory;
 
     this.topGroup = new WebInspector.ConsoleGroup(null);
@@ -379,7 +379,7 @@ WebInspector.ConsoleView.prototype = {
         var expressionString = expressionRange.toString();
         var lastIndex = expressionString.length - 1;
 
-        var dotNotation = (expressionString[lastIndex] === ".");
+        var dotNotation = (expressionString[lastIndex] === "." || expressionString[lastIndex] === ":");
         var bracketNotation = (expressionString[lastIndex] === "[");
 
         if (dotNotation || bracketNotation)
